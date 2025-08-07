@@ -1,12 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ColorModel, getColorInModel, transformImageData } from "@/utils/colorConversions";
 import { ColorAdjustments } from "@/components/ColorAdjustmentPanel";
 import { Upload } from "lucide-react";
-import demoLandscape from "@/assets/demo-landscape.jpg";
-import demoPortrait from "@/assets/demo-portrait.jpg";
-import demoButterfly from "@/assets/demo-butterfly.jpg";
-import demoFlowers from "@/assets/demo-flowers.jpg";
+import demoBalaji from "@/assets/demo-balaji.jpg";
+import demoShiva from "@/assets/demo-shiva.jpg";
+import demoGanesha from "@/assets/demo-ganesha.jpg";
+import demoKrishna from "@/assets/demo-krishna.jpg";
 
 interface ImageGalleryProps {
   selectedModel: ColorModel;
@@ -22,10 +22,10 @@ interface ImageInfo {
 }
 
 const demoImages: ImageInfo[] = [
-  { id: '1', src: demoLandscape, title: 'Rainbow Landscape', type: 'demo' },
-  { id: '2', src: demoPortrait, title: 'Colorful Portrait', type: 'demo' },
-  { id: '3', src: demoButterfly, title: 'Butterfly Wing', type: 'demo' },
-  { id: '4', src: demoFlowers, title: 'Flower Bouquet', type: 'demo' },
+  { id: '1', src: demoBalaji, title: 'Lord Balaji', type: 'demo' },
+  { id: '2', src: demoShiva, title: 'Lord Shiva', type: 'demo' },
+  { id: '3', src: demoGanesha, title: 'Lord Ganesha', type: 'demo' },
+  { id: '4', src: demoKrishna, title: 'Lord Krishna', type: 'demo' },
 ];
 
 export function ImageGallery({ selectedModel, showOriginal, adjustments }: ImageGalleryProps) {
@@ -35,6 +35,7 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
   const [colorInfo, setColorInfo] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRefs = useRef<{ [key: string]: HTMLCanvasElement }>({});
+  const imageRefs = useRef<{ [key: string]: HTMLImageElement }>({});
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -98,6 +99,17 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
     }
   }, [showOriginal, selectedModel, adjustments]);
 
+  // Redraw all canvases when adjustments, model, or view mode changes
+  useEffect(() => {
+    Object.keys(canvasRefs.current).forEach((imageId) => {
+      const canvas = canvasRefs.current[imageId];
+      const image = imageRefs.current[imageId];
+      if (canvas && image && image.complete) {
+        drawImageOnCanvas(image, canvas);
+      }
+    });
+  }, [drawImageOnCanvas, adjustments, selectedModel, showOriginal]);
+
   return (
     <div className="space-y-6">
       {/* Upload Section */}
@@ -145,9 +157,11 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
                 alt={image.title}
                 className="hidden"
                 onLoad={(e) => {
+                  const imgElement = e.target as HTMLImageElement;
+                  imageRefs.current[image.id] = imgElement;
                   const canvas = canvasRefs.current[image.id];
                   if (canvas) {
-                    drawImageOnCanvas(e.target as HTMLImageElement, canvas);
+                    drawImageOnCanvas(imgElement, canvas);
                   }
                 }}
                 crossOrigin="anonymous"
