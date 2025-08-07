@@ -153,13 +153,64 @@ export function getColorInModel(rgb: RGBColor, model: ColorModel): string {
   }
 }
 
-// Apply color model transformation to image data
-export function transformImageData(imageData: ImageData, model: ColorModel): ImageData {
+// Apply color model transformation to image data with adjustments
+export function transformImageData(imageData: ImageData, model: ColorModel, adjustments?: any): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   
   for (let i = 0; i < data.length; i += 4) {
-    const rgb = { r: data[i], g: data[i + 1], b: data[i + 2] };
+    let rgb = { r: data[i], g: data[i + 1], b: data[i + 2] };
     
+    // Apply manual adjustments first
+    if (adjustments) {
+      switch (model) {
+        case 'RGB':
+          if (adjustments.rgb) {
+            rgb.r = Math.max(0, Math.min(255, rgb.r + (adjustments.rgb.r || 0)));
+            rgb.g = Math.max(0, Math.min(255, rgb.g + (adjustments.rgb.g || 0)));
+            rgb.b = Math.max(0, Math.min(255, rgb.b + (adjustments.rgb.b || 0)));
+          }
+          break;
+        case 'HSV':
+          if (adjustments.hsv) {
+            const hsv = rgbToHsv(rgb);
+            hsv.h = (hsv.h + (adjustments.hsv.h || 0) + 360) % 360;
+            hsv.s = Math.max(0, Math.min(100, hsv.s + (adjustments.hsv.s || 0)));
+            hsv.v = Math.max(0, Math.min(100, hsv.v + (adjustments.hsv.v || 0)));
+            rgb = hsvToRgb(hsv);
+          }
+          break;
+        case 'CMYK':
+          if (adjustments.cmyk) {
+            const cmyk = rgbToCmyk(rgb);
+            cmyk.c = Math.max(0, Math.min(100, cmyk.c + (adjustments.cmyk.c || 0)));
+            cmyk.m = Math.max(0, Math.min(100, cmyk.m + (adjustments.cmyk.m || 0)));
+            cmyk.y = Math.max(0, Math.min(100, cmyk.y + (adjustments.cmyk.y || 0)));
+            cmyk.k = Math.max(0, Math.min(100, cmyk.k + (adjustments.cmyk.k || 0)));
+            rgb = cmykToRgb(cmyk);
+          }
+          break;
+        case 'LAB':
+          if (adjustments.lab) {
+            const lab = rgbToLab(rgb);
+            lab.l = Math.max(0, Math.min(100, lab.l + (adjustments.lab.l || 0)));
+            lab.a = Math.max(-128, Math.min(127, lab.a + (adjustments.lab.a || 0)));
+            lab.b = Math.max(-128, Math.min(127, lab.b + (adjustments.lab.b || 0)));
+            rgb = labToRgb(lab);
+          }
+          break;
+        case 'YUV':
+          if (adjustments.yuv) {
+            const yuv = rgbToYuv(rgb);
+            yuv.y = Math.max(0, Math.min(255, yuv.y + (adjustments.yuv.y || 0)));
+            yuv.u = Math.max(0, Math.min(255, yuv.u + (adjustments.yuv.u || 0)));
+            yuv.v = Math.max(0, Math.min(255, yuv.v + (adjustments.yuv.v || 0)));
+            rgb = yuvToRgb(yuv);
+          }
+          break;
+      }
+    }
+    
+    // Apply color model transformation for visualization
     switch (model) {
       case 'HSV':
         const hsv = rgbToHsv(rgb);
@@ -190,10 +241,119 @@ export function transformImageData(imageData: ImageData, model: ColorModel): Ima
         data[i + 2] = yuv.v;
         break;
       default:
-        // RGB - no transformation
+        // RGB - apply adjusted values
+        data[i] = rgb.r;
+        data[i + 1] = rgb.g;
+        data[i + 2] = rgb.b;
         break;
     }
   }
   
   return new ImageData(data, imageData.width, imageData.height);
+}
+
+// Convert HSV back to RGB
+export function hsvToRgb(hsv: HSVColor): RGBColor {
+  const h = hsv.h / 60;
+  const s = hsv.s / 100;
+  const v = hsv.v / 100;
+
+  const c = v * s;
+  const x = c * (1 - Math.abs((h % 2) - 1));
+  const m = v - c;
+
+  let r = 0, g = 0, b = 0;
+
+  if (h < 1) {
+    r = c; g = x; b = 0;
+  } else if (h < 2) {
+    r = x; g = c; b = 0;
+  } else if (h < 3) {
+    r = 0; g = c; b = x;
+  } else if (h < 4) {
+    r = 0; g = x; b = c;
+  } else if (h < 5) {
+    r = x; g = 0; b = c;
+  } else {
+    r = c; g = 0; b = x;
+  }
+
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
+// Convert CMYK back to RGB
+export function cmykToRgb(cmyk: CMYKColor): RGBColor {
+  const c = cmyk.c / 100;
+  const m = cmyk.m / 100;
+  const y = cmyk.y / 100;
+  const k = cmyk.k / 100;
+
+  const r = 255 * (1 - c) * (1 - k);
+  const g = 255 * (1 - m) * (1 - k);
+  const b = 255 * (1 - y) * (1 - k);
+
+  return {
+    r: Math.round(r),
+    g: Math.round(g),
+    b: Math.round(b)
+  };
+}
+
+// Convert LAB back to RGB (simplified)
+export function labToRgb(lab: LABColor): RGBColor {
+  // Convert LAB to XYZ
+  let y = (lab.l + 16) / 116;
+  let x = lab.a / 500 + y;
+  let z = y - lab.b / 200;
+
+  // Apply inverse transformation
+  const x3 = x * x * x;
+  const y3 = y * y * y;
+  const z3 = z * z * z;
+
+  x = x3 > 0.008856 ? x3 : (x - 16/116) / 7.787;
+  y = y3 > 0.008856 ? y3 : (y - 16/116) / 7.787;
+  z = z3 > 0.008856 ? z3 : (z - 16/116) / 7.787;
+
+  // Reference white D65
+  x *= 0.95047;
+  y *= 1.00000;
+  z *= 1.08883;
+
+  // Convert XYZ to RGB
+  let r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+  let g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+  let b = x * 0.0557 + y * -0.2040 + z * 1.0570;
+
+  // Apply gamma correction
+  r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
+  g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
+  b = b > 0.0031308 ? 1.055 * Math.pow(b, 1/2.4) - 0.055 : 12.92 * b;
+
+  return {
+    r: Math.max(0, Math.min(255, Math.round(r * 255))),
+    g: Math.max(0, Math.min(255, Math.round(g * 255))),
+    b: Math.max(0, Math.min(255, Math.round(b * 255)))
+  };
+}
+
+// Convert YUV back to RGB
+export function yuvToRgb(yuv: YUVColor): RGBColor {
+  const y = yuv.y / 255;
+  const u = (yuv.u / 255) - 0.5;
+  const v = (yuv.v / 255) - 0.5;
+
+  const r = y + 1.403 * v;
+  const g = y - 0.344 * u - 0.714 * v;
+  const b = y + 1.770 * u;
+
+  return {
+    r: Math.max(0, Math.min(255, Math.round(r * 255))),
+    g: Math.max(0, Math.min(255, Math.round(g * 255))),
+    b: Math.max(0, Math.min(255, Math.round(b * 255)))
+  };
 }

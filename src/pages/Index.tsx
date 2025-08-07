@@ -3,11 +3,13 @@ import { ColorMagicHeader } from "@/components/ColorMagicHeader";
 import { ColorModelSelector } from "@/components/ColorModelSelector";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ColorAdjustmentPanel, ColorAdjustments } from "@/components/ColorAdjustmentPanel";
 import { ColorModel } from "@/utils/colorConversions";
 
 const Index = () => {
   const [selectedModel, setSelectedModel] = useState<ColorModel>('RGB');
   const [showOriginal, setShowOriginal] = useState(true);
+  const [adjustments, setAdjustments] = useState<ColorAdjustments>({});
 
   return (
     <div className="min-h-screen bg-background">
@@ -18,7 +20,7 @@ const Index = () => {
         <ColorMagicHeader />
         
         {/* Controls Section */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6 mb-8">
           <ColorModelSelector 
             selectedModel={selectedModel} 
             onModelChange={setSelectedModel} 
@@ -28,12 +30,17 @@ const Index = () => {
             onToggle={() => setShowOriginal(!showOriginal)}
             selectedModel={selectedModel}
           />
+          <ColorAdjustmentPanel
+            selectedModel={selectedModel}
+            onAdjustmentChange={setAdjustments}
+          />
         </div>
 
         {/* Main Gallery */}
         <ImageGallery 
           selectedModel={selectedModel}
           showOriginal={showOriginal}
+          adjustments={adjustments}
         />
       </div>
     </div>

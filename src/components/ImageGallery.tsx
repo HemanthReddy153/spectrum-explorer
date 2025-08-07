@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { ColorModel, getColorInModel, transformImageData } from "@/utils/colorConversions";
+import { ColorAdjustments } from "@/components/ColorAdjustmentPanel";
 import { Upload } from "lucide-react";
 import demoLandscape from "@/assets/demo-landscape.jpg";
 import demoPortrait from "@/assets/demo-portrait.jpg";
@@ -10,6 +11,7 @@ import demoFlowers from "@/assets/demo-flowers.jpg";
 interface ImageGalleryProps {
   selectedModel: ColorModel;
   showOriginal: boolean;
+  adjustments?: ColorAdjustments;
 }
 
 interface ImageInfo {
@@ -26,7 +28,7 @@ const demoImages: ImageInfo[] = [
   { id: '4', src: demoFlowers, title: 'Flower Bouquet', type: 'demo' },
 ];
 
-export function ImageGallery({ selectedModel, showOriginal }: ImageGalleryProps) {
+export function ImageGallery({ selectedModel, showOriginal, adjustments }: ImageGalleryProps) {
   const [images, setImages] = useState<ImageInfo[]>(demoImages);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -89,12 +91,12 @@ export function ImageGallery({ selectedModel, showOriginal }: ImageGalleryProps)
     canvas.height = image.naturalHeight;
     ctx.drawImage(image, 0, 0);
 
-    if (!showOriginal && selectedModel !== 'RGB') {
+    if (!showOriginal) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const transformedData = transformImageData(imageData, selectedModel);
+      const transformedData = transformImageData(imageData, selectedModel, adjustments);
       ctx.putImageData(transformedData, 0, 0);
     }
-  }, [showOriginal, selectedModel]);
+  }, [showOriginal, selectedModel, adjustments]);
 
   return (
     <div className="space-y-6">
