@@ -1,0 +1,184 @@
+import { useState, useRef, useCallback } from "react";
+import { Card } from "@/components/ui/card";
+import { ColorModel, getColorInModel, transformImageData } from "@/utils/colorConversions";
+import { Upload } from "lucide-react";
+import demoLandscape from "@/assets/demo-landscape.jpg";
+import demoPortrait from "@/assets/demo-portrait.jpg";
+import demoButterfly from "@/assets/demo-butterfly.jpg";
+import demoFlowers from "@/assets/demo-flowers.jpg";
+
+interface ImageGalleryProps {
+  selectedModel: ColorModel;
+  showOriginal: boolean;
+}
+
+interface ImageInfo {
+  id: string;
+  src: string;
+  title: string;
+  type: 'demo' | 'uploaded';
+}
+
+const demoImages: ImageInfo[] = [
+  { id: '1', src: demoLandscape, title: 'Rainbow Landscape', type: 'demo' },
+  { id: '2', src: demoPortrait, title: 'Colorful Portrait', type: 'demo' },
+  { id: '3', src: demoButterfly, title: 'Butterfly Wing', type: 'demo' },
+  { id: '4', src: demoFlowers, title: 'Flower Bouquet', type: 'demo' },
+];
+
+export function ImageGallery({ selectedModel, showOriginal }: ImageGalleryProps) {
+  const [images, setImages] = useState<ImageInfo[]>(demoImages);
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [colorInfo, setColorInfo] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRefs = useRef<{ [key: string]: HTMLCanvasElement }>({});
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            const newImage: ImageInfo = {
+              id: `uploaded-${Date.now()}-${Math.random()}`,
+              src: e.target.result as string,
+              title: file.name,
+              type: 'uploaded'
+            };
+            setImages(prev => [...prev, newImage]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }, []);
+
+  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>, imageId: string) => {
+    const canvas = canvasRefs.current[imageId];
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    try {
+      const imageData = ctx.getImageData(x, y, 1, 1);
+      const pixel = imageData.data;
+      const rgb = { r: pixel[0], g: pixel[1], b: pixel[2] };
+      const colorValue = getColorInModel(rgb, selectedModel);
+      
+      setColorInfo(colorValue);
+      setMousePos({ x: event.clientX, y: event.clientY });
+    } catch (error) {
+      // Ignore canvas security errors
+    }
+  }, [selectedModel]);
+
+  const drawImageOnCanvas = useCallback((image: HTMLImageElement, canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    ctx.drawImage(image, 0, 0);
+
+    if (!showOriginal && selectedModel !== 'RGB') {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const transformedData = transformImageData(imageData, selectedModel);
+      ctx.putImageData(transformedData, 0, 0);
+    }
+  }, [showOriginal, selectedModel]);
+
+  return (
+    <div className="space-y-6">
+      {/* Upload Section */}
+      <Card className="p-6 border-dashed border-2 border-primary/30 hover:border-primary/50 transition-smooth cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}>
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
+            <Upload className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <div>
+            <p className="text-lg font-medium">Upload Your Own Images</p>
+            <p className="text-sm text-muted-foreground">Click here or drag and drop images to analyze their colors</p>
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      </Card>
+
+      {/* Image Gallery */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {images.map((image) => (
+          <Card key={image.id} className="group overflow-hidden bg-card border-border hover:shadow-rainbow transition-smooth">
+            <div className="relative">
+              <canvas
+                ref={(el) => {
+                  if (el) canvasRefs.current[image.id] = el;
+                }}
+                className="w-full h-48 object-cover image-hover-effect cursor-crosshair"
+                onMouseEnter={() => setHoveredImage(image.id)}
+                onMouseLeave={() => {
+                  setHoveredImage(null);
+                  setColorInfo('');
+                }}
+                onMouseMove={(e) => handleMouseMove(e, image.id)}
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <img
+                src={image.src}
+                alt={image.title}
+                className="hidden"
+                onLoad={(e) => {
+                  const canvas = canvasRefs.current[image.id];
+                  if (canvas) {
+                    drawImageOnCanvas(e.target as HTMLImageElement, canvas);
+                  }
+                }}
+                crossOrigin="anonymous"
+              />
+              
+              {/* Color Model Badge */}
+              {!showOriginal && selectedModel !== 'RGB' && (
+                <div className="absolute top-3 right-3 px-2 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                  {selectedModel}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4">
+              <h3 className="font-medium text-card-foreground truncate">{image.title}</h3>
+              <p className="text-sm text-muted-foreground capitalize">{image.type} image</p>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Color Tooltip */}
+      {hoveredImage && colorInfo && (
+        <div
+          className="color-tooltip visible"
+          style={{
+            left: `${mousePos.x + 10}px`,
+            top: `${mousePos.y - 40}px`,
+          }}
+        >
+          {colorInfo}
+        </div>
+      )}
+    </div>
+  );
+}

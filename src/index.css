@@ -2,41 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Color Magic Design System - Vibrant color-focused theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors - Dark theme for better color contrast */
+    --background: 220 27% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 27% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 27% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Color Magic brand colors */
+    --primary: 280 100% 70%;  /* Vibrant purple */
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 300 100% 80%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 190 100% 60%;  /* Bright cyan */
+    --secondary-foreground: 220 27% 8%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 330 100% 65%;  /* Hot pink */
+    --accent-foreground: 0 0% 98%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 220 27% 16%;
+    --muted-foreground: 220 9% 65%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 27% 20%;
+    --input: 220 27% 16%;
+    --ring: 280 100% 70%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Color Magic specific gradients */
+    --gradient-rainbow: linear-gradient(135deg, 
+      hsl(0, 100%, 70%) 0%, 
+      hsl(60, 100%, 70%) 20%, 
+      hsl(120, 100%, 70%) 40%, 
+      hsl(180, 100%, 70%) 60%, 
+      hsl(240, 100%, 70%) 80%, 
+      hsl(300, 100%, 70%) 100%
+    );
+    
+    --gradient-primary: linear-gradient(135deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--primary-glow)) 100%
+    );
+    
+    --gradient-magic: linear-gradient(135deg,
+      hsl(280, 100%, 70%) 0%,
+      hsl(190, 100%, 60%) 50%,
+      hsl(330, 100%, 65%) 100%
+    );
+
+    /* Shadows with color magic */
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+    --shadow-rainbow: 0 8px 32px hsla(280, 100%, 70%, 0.2);
+    
+    /* Animation timing */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +131,50 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Color Magic utility classes */
+  .gradient-rainbow {
+    background: var(--gradient-rainbow);
+  }
+  
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-magic {
+    background: var(--gradient-magic);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-rainbow {
+    box-shadow: var(--shadow-rainbow);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+  
+  /* Interactive image hover effects */
+  .image-hover-effect {
+    @apply transition-smooth hover:scale-105 hover:shadow-rainbow;
+  }
+  
+  /* Color picker tooltip */
+  .color-tooltip {
+    @apply absolute z-50 px-3 py-2 text-xs font-medium text-primary-foreground bg-card border border-border rounded-lg shadow-lg pointer-events-none opacity-0 transition-opacity duration-200;
+  }
+  
+  .color-tooltip.visible {
+    @apply opacity-100;
   }
 }
