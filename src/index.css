@@ -177,4 +177,31 @@
   .color-tooltip.visible {
     @apply opacity-100;
   }
+  
+  /* Mobile touch support for drag and drop */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Mobile-friendly drag indicators */
+  @media (max-width: 768px) {
+    .mobile-drag-hint {
+      @apply text-sm opacity-80;
+    }
+    
+    .touch-interaction {
+      @apply active:scale-95 transition-transform duration-150;
+    }
+    
+    /* Enhanced touch targets for mobile */
+    .mobile-touch-target {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
 }

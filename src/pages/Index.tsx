@@ -3,6 +3,7 @@ import { ColorMagicHeader } from "@/components/ColorMagicHeader";
 import { ColorModelSelector } from "@/components/ColorModelSelector";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ImageWorkspace } from "@/components/ImageWorkspace";
 import { ColorAdjustmentPanel, ColorAdjustments } from "@/components/ColorAdjustmentPanel";
 import { ColorModel } from "@/utils/colorConversions";
 
@@ -33,6 +34,16 @@ const Index = () => {
           <ColorAdjustmentPanel
             selectedModel={selectedModel}
             onAdjustmentChange={setAdjustments}
+          />
+        </div>
+
+        {/* Image Workspace */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-center">Image Workspace</h2>
+          <ImageWorkspace
+            selectedModel={selectedModel}
+            showOriginal={showOriginal}
+            adjustments={adjustments}
           />
         </div>
 

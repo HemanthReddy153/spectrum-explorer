@@ -156,6 +156,11 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
                   setColorInfo('');
                 }}
                 onMouseMove={(e) => handleMouseMove(e, image.id)}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', image.src);
+                  e.dataTransfer.effectAllowed = 'copy';
+                }}
+                draggable
                 style={{ imageRendering: 'pixelated' }}
               />
               <img
