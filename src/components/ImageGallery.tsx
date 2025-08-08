@@ -11,7 +11,6 @@ import demoKrishna from "@/assets/demo-krishna.jpg";
 interface ImageGalleryProps {
   selectedModel: ColorModel;
   showOriginal: boolean;
-  adjustments?: ColorAdjustments;
 }
 
 interface ImageInfo {
@@ -28,7 +27,7 @@ const demoImages: ImageInfo[] = [
   { id: '4', src: demoKrishna, title: 'Lord Krishna', type: 'demo' },
 ];
 
-export function ImageGallery({ selectedModel, showOriginal, adjustments }: ImageGalleryProps) {
+export function ImageGallery({ selectedModel, showOriginal }: ImageGalleryProps) {
   const [images, setImages] = useState<ImageInfo[]>(demoImages);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -92,20 +91,15 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
     canvas.height = image.naturalHeight;
     ctx.drawImage(image, 0, 0);
 
-    // Check if any adjustments have been made
-    const hasAdjustments = adjustments && Object.values(adjustments).some(modelAdjustments => 
-      modelAdjustments && Object.values(modelAdjustments).some(value => value !== 0)
-    );
-
-    // Show transformations if not showing original OR if adjustments have been made
-    if (!showOriginal || hasAdjustments) {
+    // Gallery images always show original or color model view only (no adjustments)
+    if (!showOriginal) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const transformedData = transformImageData(imageData, selectedModel, adjustments);
+      const transformedData = transformImageData(imageData, selectedModel);
       ctx.putImageData(transformedData, 0, 0);
     }
-  }, [showOriginal, selectedModel, adjustments]);
+  }, [showOriginal, selectedModel]);
 
-  // Redraw all canvases when adjustments, model, or view mode changes
+  // Redraw all canvases when model or view mode changes
   useEffect(() => {
     Object.keys(canvasRefs.current).forEach((imageId) => {
       const canvas = canvasRefs.current[imageId];
@@ -114,7 +108,7 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
         drawImageOnCanvas(image, canvas);
       }
     });
-  }, [drawImageOnCanvas, adjustments, selectedModel, showOriginal]);
+  }, [drawImageOnCanvas, selectedModel, showOriginal]);
 
   return (
     <div className="space-y-6">
