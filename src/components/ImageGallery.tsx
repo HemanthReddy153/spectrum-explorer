@@ -92,7 +92,13 @@ export function ImageGallery({ selectedModel, showOriginal, adjustments }: Image
     canvas.height = image.naturalHeight;
     ctx.drawImage(image, 0, 0);
 
-    if (!showOriginal) {
+    // Check if any adjustments have been made
+    const hasAdjustments = adjustments && Object.values(adjustments).some(modelAdjustments => 
+      modelAdjustments && Object.values(modelAdjustments).some(value => value !== 0)
+    );
+
+    // Show transformations if not showing original OR if adjustments have been made
+    if (!showOriginal || hasAdjustments) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const transformedData = transformImageData(imageData, selectedModel, adjustments);
       ctx.putImageData(transformedData, 0, 0);
