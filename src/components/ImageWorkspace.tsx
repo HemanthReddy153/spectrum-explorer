@@ -40,9 +40,10 @@ export function ImageWorkspace({ selectedModel, showOriginal, adjustments, onIma
       modelAdjustments && Object.values(modelAdjustments).some(value => value !== 0)
     );
 
-    // Show transformations when not showing original AND we have adjustments, 
-    // OR when we're explicitly not showing original (even without adjustments)
-    if (!showOriginal) {
+    // Show transformations if:
+    // 1. Not showing original (color model transformation), OR
+    // 2. Showing original but have adjustments (color value adjustments)
+    if (!showOriginal || hasAdjustments) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const transformedData = transformImageData(imageData, selectedModel, adjustments);
       ctx.putImageData(transformedData, 0, 0);
