@@ -40,6 +40,13 @@ export function ImageWorkspace({ selectedModel, showOriginal, adjustments, onIma
       modelAdjustments && Object.values(modelAdjustments).some(value => value !== 0)
     );
 
+    console.log('ImageWorkspace debug:', { 
+      showOriginal, 
+      selectedModel, 
+      hasAdjustments, 
+      adjustments: JSON.stringify(adjustments) 
+    });
+
     // Show transformations if:
     // 1. Not showing original (color model transformation), OR
     // 2. Showing original but have adjustments (color value adjustments)
