@@ -172,7 +172,12 @@ export function ImageWorkspace({ selectedModel, showOriginal, adjustments, onIma
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onTouchStart={handleTouchStart}
-        onClick={() => !workspaceImage && fileInputRef.current?.click()}
+        onClick={(e) => {
+          if (!workspaceImage) {
+            e.stopPropagation();
+            fileInputRef.current?.click();
+          }
+        }}
       >
         {workspaceImage ? (
           <div className="relative w-full h-full flex items-center justify-center">
